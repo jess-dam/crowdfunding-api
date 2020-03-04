@@ -20,6 +20,22 @@ UserSchema.methods.generateAuthToken = function () {
     return jwt.sign(this.id, process.env.JWT_SECRET)
 }
 
+UserSchema.methods.verifyCorrectPassword = async function (passwordAttempt) {
+    console.log(passwordAttempt)
+
+    const isCorrect = await bcrypt.compare(passwordAttempt, this.password, (err, result) => {
+        if(result == true){
+            return true
+        } else {
+            console.log(err)
+            return false
+        }
+    })
+
+    console.log(isCorrect)
+    return isCorrect
+}
+
 const UserModel = mongoose.model('User', UserSchema)
 
 module.exports = UserModel

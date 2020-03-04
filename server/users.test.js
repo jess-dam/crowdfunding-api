@@ -43,7 +43,6 @@ describe('POST /users', () => {
             let res
             beforeAll(async (done) => {
                 await givenUserDbIsEmpty()
-                console.log('about to sign up new user')
                 res = await supertest(app).post('/users/signup').send(DEFAULT_USER)
                 done()
             })
@@ -81,18 +80,78 @@ describe('POST /users', () => {
                 })
             })
     })
+})
+})
 
+
+
+describe('GET requests', () => {
     describe('/signin', () => {
-        beforeAll(() => {
-
-        })
-
         describe('with correct username and password', () => {
+            beforeAll( async (done) => {
+                await givenUserDbIsEmpty()
+                await User.create(DEFAULT_USER)
+                res = await supertest(app).get('/users/signin').send({
+                    email: DEFAULT_USER.email,
+                    password: DEFAULT_USER.password
+                })
+                done()
+            })
+            test('should return success status of 202', () => {
+                expect(res.status).toBe(202)
+            })
 
+            test('should return appropriate message and token', () => {
+                expect(res.body).toMatchObject({
+                    status: 'success',
+                    message: 'Sign in credentials accepted'
+                })
+                expect(typeof res.body.token).toBe('string')
+            })
         })
 
         describe('with incorrect password', () => {
+            beforeAll( async (done) => {
+                await givenUserDbIsEmpty()
+                await User.create(DEFAULT_USER)
+                res = await supertest(app).get('/users/signin').send({
+                    email: DEFAULT_USER.email,
+                    password: 'dnkshglksdf'
+                })
+                done()
+            })
 
+            test('should return fail status 401', () => {
+                expect(res.status).toBe(401)
+            })
+
+            test('should return appropriate message', () => {
+                expect(res.body).toMatchObject({
+                    status: 'failed',
+                    message: 'Incorrect email or password'
+                })
+            })
+        })
+
+        describe('with non-existent user', () => {
+            beforeAll( async (done) => {
+                await givenUserDbIsEmpty()
+                res = await supertest(app).get('/users/signin').send({
+                    email: 'nyanyan64@nya.com',
+                    password: 'nnnnkbnvmlv'
+                })
+                done()
+            })
+            test('should return fail status 404', () => {
+                expect(res.status).toBe(404)
+            })
+
+            test('should return appropriate message', () => {
+                expect(res.body).toMatchObject({
+                    status: 'failed',
+                    message: 'Could not find this user'
+                })
+            })
         })
     })
 
@@ -107,7 +166,7 @@ describe('POST /users', () => {
     })
 })
 
-})
+
 
 const givenUserDbIsEmpty = async () => {
     await User.deleteMany({})
